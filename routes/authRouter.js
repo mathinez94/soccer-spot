@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
             return res.status(204).json({ message: 'Invalid password' });
         }
 
-        console.log( 'authentication successful');
+        console.log( 'login successful');
 
         // Generate JWT token (optional)
         const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -91,6 +91,7 @@ const authenticateToken = (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded.id;
+        console.log('authentication successful')
         next();
 
     } catch (error) {
@@ -176,3 +177,5 @@ router.post('/prediction_form/:id', async (req, res) => {
 
 
 export default router;
+
+// "nodemon --env-file=.env index.js"
