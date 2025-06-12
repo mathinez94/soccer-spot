@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 const db = await connectToDatabase();
-if(db !== null){
+if (db !== null) {
     console.log("Connected to the database");
 }
 
@@ -69,12 +69,12 @@ router.post('/login', async (req, res) => {
             return res.status(204).json({ message: 'Invalid password' });
         }
 
-        console.log( 'login successful');
+        console.log('login successful');
 
         // Generate JWT token (optional)
         const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         console.log('Token:', token);
-        return res.status(200).json({ token: token});
+        return res.status(200).json({ token: token });
 
     } catch (error) {
         console.error('Error logging in:', error);
@@ -97,13 +97,13 @@ const authenticateToken = (req, res, next) => {
     } catch (error) {
         console.error('Error authenticating token:', error);
         return res.status(401).json({ message: 'Unauthorized' });
-        
+
     }
 }
 
 router.get('/prediction', authenticateToken, async (req, res) => {
     try {
-   
+
         // Fetch user data from the database
         const [user] = await db.query('SELECT * FROM users WHERE id = ?', [req.user]);
         if (user.length === 0) {
@@ -117,8 +117,8 @@ router.get('/prediction', authenticateToken, async (req, res) => {
 
         return res.status(200).json(
             {
-                "user": user[0] ,
-                "prediction": [ prediction ],
+                "user": user[0],
+                "prediction": [prediction],
             }
         );
     } catch (error) {
@@ -129,7 +129,7 @@ router.get('/prediction', authenticateToken, async (req, res) => {
 
 router.post('/prediction_form/:id', async (req, res) => {
     const user_id = req.params.id;
-    const {country, home, away, outcome} = req.body;
+    const { country, home, away, outcome } = req.body;
     const today = new Date().toISOString().split('T')[0];
     // console.log(today);
     // console.log(country, home, away, outcome);
@@ -141,26 +141,26 @@ router.post('/prediction_form/:id', async (req, res) => {
         return res.status(214).json({ message: 'Please fill in all fields' });
     }
 
-    try{
+    try {
 
-    //     // Fetch prediction data from the database
+        //     // Fetch prediction data from the database
         const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
         if (user.length === 0) {
             return res.status(212).json({ message: 'user not found' });
-        } 
+        }
         // res.status(200).json({ message:'User found' });
         const { username } = user[0];
         console.log(username);
-        
-    //     // Fetch prediction data from the database
+
+        //     // Fetch prediction data from the database
         const [prediction] = await db.query('SELECT COUNT(*) AS count FROM prediction WHERE user_ref = ? AND DATE(created_at) = ?', [user_id, today]);
         if (prediction[0].count >= 2) {
             return res.status(211).json({ message: 'you have reached your daily prediction limit' });
         }
 
-    //     // Insert new prediction into the database
+        //     // Insert new prediction into the database
         const [result] = await db.query('INSERT INTO prediction (username, country, home, away, outcome, created_at, user_ref) VALUES (?, ?, ?, ?, ?, NOW(), ?)', [username, country, home, away, outcome, user_id]);
-        if(result.length === 0 ){
+        if (result.length === 0) {
             return res.status(210).json({ message: 'failed to submit prediction' });
         }
         // Fetch all predictions from the database
@@ -168,9 +168,9 @@ router.post('/prediction_form/:id', async (req, res) => {
         console.log('prediction submitted successfully');
         // Send all predictions data to the client
         return res.status(201).json({ message: 'prediction submitted successfully', predictions: allPredictions });
-        
+
         // return res.status(201).json({message: 'prediction submitted successfully'});
-    }catch (error) {
+    } catch (error) {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
